@@ -4,7 +4,6 @@ Dockerfile
 .git
 .gitignore
 *.md
-*.txt
 
 # Ignora la cartella dei test, non serve in produzione
 tests/
