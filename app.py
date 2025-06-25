@@ -8,6 +8,7 @@ import logging
 import copy
 from datetime import datetime
 import re
+import os
 
 app = Flask(__name__)
 
@@ -225,4 +226,5 @@ def reset_scraping():
     return '', 200
 
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=5001)
+    # Railway userà il comando Gunicorn, ma questo è utile per la coerenza
+    app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 8080)))

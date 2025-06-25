@@ -301,23 +301,17 @@ def run_scraping(start_url):
     chrome_options.add_argument("--headless")
     chrome_options.add_argument("--no-sandbox")
     chrome_options.add_argument("--disable-dev-shm-usage")
+    chrome_options.add_argument("--window-size=1920,1080") # A volte aiuta
+
+    # Opzioni per mascherare l'automazione
+    user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"
+    chrome_options.add_argument(f'user-agent={user_agent}')
     chrome_options.add_argument("--disable-blink-features=AutomationControlled")
 
-    user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36"
-    chrome_options.add_argument(f'user-agent={user_agent}')
-
-    # --- INIZIO BLOCCO PER HEROKU ---
-    # Rileva automaticamente l'ambiente Heroku e usa i percorsi forniti dalle variabili d'ambiente
-    if "GOOGLE_CHROME_BIN" in os.environ:
-        logger.info("Rilevato ambiente Heroku, si usano i percorsi specifici.")
-        chrome_options.binary_location = os.environ.get("GOOGLE_CHROME_BIN")
-        service = Service(executable_path=os.environ.get("CHROMEDRIVER_PATH"))
-        driver = webdriver.Chrome(service=service, options=chrome_options)
-    else:
-        logger.info("Nessun ambiente Heroku rilevato, si usa la configurazione locale.")
-        # Se chromedriver è nel PATH di sistema, non serve specificare il service
-        driver = webdriver.Chrome(options=chrome_options)
-    # --- FINE BLOCCO PER HEROKU ---
+    # Inizializzazione semplice e pulita.
+    # Ci affidiamo completamente a Railway/Nixpacks per trovare e configurare
+    # sia Chrome che Chromedriver nel path di sistema.
+    driver = webdriver.Chrome(options=chrome_options)
 
     try:
         driver.set_page_load_timeout(300)  # Timeout massimo 5 minuti
