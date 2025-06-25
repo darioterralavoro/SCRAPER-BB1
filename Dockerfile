@@ -8,13 +8,12 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y wget unzip libnss3 libgdk-pixbuf2.0-0 libgtk-3-0 libx11-xcb1 libdbus-glib-1-2 libxtst6 libxss1 libasound2 \
     && rm -rf /var/lib/apt/lists/*
 
-# --- INIZIO SEZIONE CON URL FISSI ---
+# --- INIZIO SEZIONE MODIFICATA CON USER-AGENT ---
 
-# Scarica e installa versioni fisse di Chrome e Chromedriver usando URL diretti.
-# Questi link puntano a una versione stabile recente (126).
-RUN echo "Download di Chrome e Chromedriver con URL statici..." \
-    && wget -O chrome-linux64.zip "https://storage.googleapis.com/chrome-for-testing-public/126.0.6478.126/linux-x64/chrome-linux-x64.zip" \
-    && wget -O chromedriver-linux64.zip "https://storage.googleapis.com/chrome-for-testing-public/126.0.6478.126/linux-x64/chromedriver-linux64.zip" \
+# Scarica e installa versioni fisse di Chrome e Chromedriver usando URL diretti e un User-Agent
+RUN echo "Download di Chrome e Chromedriver con URL statici e User-Agent..." \
+    && wget --user-agent="Mozilla/5.0" -O chrome-linux64.zip "https://storage.googleapis.com/chrome-for-testing-public/126.0.6478.126/linux-x64/chrome-linux-x64.zip" \
+    && wget --user-agent="Mozilla/5.0" -O chromedriver-linux64.zip "https://storage.googleapis.com/chrome-for-testing-public/126.0.6478.126/linux-x64/chromedriver-linux64.zip" \
     \
     && unzip chrome-linux64.zip \
     && unzip chromedriver-linux64.zip \
@@ -24,7 +23,7 @@ RUN echo "Download di Chrome e Chromedriver con URL statici..." \
     \
     && rm *.zip
 
-# --- FINE SEZIONE CON URL FISSI ---
+# --- FINE SEZIONE MODIFICATA CON USER-AGENT ---
 
 # Copia tutti i file del progetto
 COPY . .
