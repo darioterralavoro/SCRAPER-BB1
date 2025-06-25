@@ -4,33 +4,42 @@ FROM python:3.11-slim
 # Imposta la directory di lavoro all'interno del container
 WORKDIR /app
 
-# Installa le dipendenze di sistema, incluso Google Chrome
-RUN apt-get update && apt-get install -y wget unzip gnupg \
-    && wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - \
-    && sh -c 'echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google-chrome.list' \
-    && apt-get update \
-    && apt-get install -y google-chrome-stable \
+# Installa solo le dipendenze di sistema minime. NON installiamo più Chrome da apt.
+# Aggiungiamo le librerie grafiche necessarie per far girare Chrome headless.
+RUN apt-get update && apt-get install -y wget unzip jq libnss3 libgdk-pixbuf2.0-0 libgtk-3-0 libx11-xcb1 libdbus-glib-1-2 libxtst6 libxss1 libasound2 \
     && rm -rf /var/lib/apt/lists/*
 
-# Scarica e installa il chromedriver FORZANDO la versione per AMD64 (x64)
-RUN apt-get update && apt-get install -y jq \
-    && echo "Forcing AMD64 (x64) architecture for chromedriver download..." \
-    && CHROME_VERSION=$(google-chrome --version | cut -d " " -f 3 | cut -d "." -f 1-3) \
-    && CD_URL=$(wget -qO- https://googlechromelabs.github.io/chrome-for-testing/known-good-versions-with-downloads.json | jq -r ".versions[] | select(.version | startswith(\"${CHROME_VERSION}\")) | .downloads.chromedriver[] | select(.platform==\"linux-x64\") | .url") \
-    && wget -O chromedriver.zip ${CD_URL} \
-    && unzip chromedriver.zip \
+# --- INIZIO SEZIONE NUOVA E DEFINITIVA ---
+
+# Scarica e installa l'ultima versione STABILE di Chrome e il suo Chromedriver corrispondente
+RUN echo "Fetching latest STABLE Chrome and Chromedriver for linux-x64..." \
+    && LAST_KNOWN_GOOD_URL="https://googlechromelabs.github.io/chrome-for-testing/last-known-good-versions-with-downloads.json" \
+    \
+    # Trova e scarica l'ultima versione STABILE di Chrome per linux-x64
+    && CHROME_URL=$(wget -qO- ${LAST_KNOWN_GOOD_URL} | jq -r '.channels.Stable.downloads.chrome[] | select(.platform=="linux-x64") | .url') \
+    && wget -O chrome-linux64.zip ${CHROME_URL} \
+    && unzip chrome-linux64.zip \
+    && mv chrome-linux64 /opt/chrome-linux64 \
+    \
+    # Trova e scarica l'ultima versione STABILE di Chromedriver per linux-x64
+    && CHROMEDRIVER_URL=$(wget -qO- ${LAST_KNOWN_GOOD_URL} | jq -r '.channels.Stable.downloads.chromedriver[] | select(.platform=="linux-x64") | .url') \
+    && wget -O chromedriver-linux64.zip ${CHROMEDRIVER_URL} \
+    && unzip chromedriver-linux64.zip \
     && mv chromedriver-linux64/chromedriver /usr/local/bin/ \
-    && rm -rf chromedriver.zip chromedriver-linux64 \
-    && rm -rf /var/lib/apt/lists/*
+    \
+    # Pulizia
+    && rm *.zip
 
-# Copia TUTTI i file del progetto (dalla Root Directory) nella directory di lavoro (/app)
+# --- FINE SEZIONE NUOVA E DEFINITIVA ---
+
+# Copia tutti i file del progetto
 COPY . .
 
-# Ora che tutti i file sono dentro, installa le dipendenze Python
+# Installa le dipendenze Python
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Esponi la porta su cui Gunicorn girerà
+# Esponi la porta
 EXPOSE 10000
 
-# Comando per avviare l'applicazione in produzione
+# Comando per avviare l'applicazione
 CMD ["gunicorn", "--bind", "0.0.0.0:10000", "app:app"]
