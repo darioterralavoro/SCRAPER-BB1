@@ -1,6 +1,6 @@
-# Scraper Web Blubonus.
+# Scraper Web BB.
 ## Descrizione
-Questa applicazione è una webapp Flask che esegue lo scraping del sito blubonus.it, raccogliendo informazioni su bonus, agevolazioni e prodotti regionali. I dati estratti vengono visualizzati in una tabella web e possono essere scaricati in formato JSON.
+Questa applicazione è una webapp Flask che esegue lo scraping del sito BB, raccogliendo informazioni su bonus. I dati estratti vengono visualizzati in una tabella web e possono essere scaricati in formato JSON.
 
 ## Funzionalità principali
 - Avvio dello scraping tramite interfaccia web
