@@ -296,18 +296,22 @@ def run_scraping(start_url):
             logger.warning(f"Impossibile leggere il file di cache {cache_filepath}: {e}. Si procederà con lo scraping.")
     # --- FINE LOGICA DI CACHING ---
     chrome_options = Options()
+
     # Questo puntatore è FONDAMENTALE perché abbiamo installato Chrome in un percorso personalizzato
     chrome_options.binary_location = "/opt/chrome-linux64/chrome"
+
     # Opzioni standard per l'esecuzione su server
     chrome_options.add_argument("--headless")
     chrome_options.add_argument("--no-sandbox")
     chrome_options.add_argument("--disable-dev-shm-usage")
+
     # Opzioni per mascherare l'automazione
     user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36"
     chrome_options.add_argument(f'user-agent={user_agent}')
     chrome_options.add_argument("--disable-blink-features=AutomationControlled")
-    # Inizializza il driver. Non serve più specificare il path di chromedriver
-    # perché lo abbiamo messo in una directory di sistema (/usr/local/bin).
+
+    # Inizializza il driver. Non serve specificare il service path
+    # perché chromedriver è ora nel PATH di sistema (/usr/local/bin).
     driver = webdriver.Chrome(options=chrome_options)
     try:
         driver.set_page_load_timeout(300)  # Timeout massimo 5 minuti

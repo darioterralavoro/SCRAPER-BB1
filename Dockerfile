@@ -4,33 +4,25 @@ FROM python:3.11-slim
 # Imposta la directory di lavoro all'interno del container
 WORKDIR /app
 
-# Installa solo le dipendenze di sistema minime. NON installiamo più Chrome da apt.
-# Aggiungiamo le librerie grafiche necessarie per far girare Chrome headless.
+# Installa solo le dipendenze di sistema minime, incluse quelle per Chrome headless
 RUN apt-get update && apt-get install -y wget unzip jq libnss3 libgdk-pixbuf2.0-0 libgtk-3-0 libx11-xcb1 libdbus-glib-1-2 libxtst6 libxss1 libasound2 \
     && rm -rf /var/lib/apt/lists/*
-
-# --- INIZIO SEZIONE NUOVA E DEFINITIVA ---
 
 # Scarica e installa l'ultima versione STABILE di Chrome e il suo Chromedriver corrispondente
 RUN echo "Fetching latest STABLE Chrome and Chromedriver for linux-x64..." \
     && LAST_KNOWN_GOOD_URL="https://googlechromelabs.github.io/chrome-for-testing/last-known-good-versions-with-downloads.json" \
     \
-    # Trova e scarica l'ultima versione STABILE di Chrome per linux-x64
     && CHROME_URL=$(wget -qO- ${LAST_KNOWN_GOOD_URL} | jq -r '.channels.Stable.downloads.chrome[] | select(.platform=="linux-x64") | .url') \
     && wget -O chrome-linux64.zip ${CHROME_URL} \
     && unzip chrome-linux64.zip \
     && mv chrome-linux64 /opt/chrome-linux64 \
     \
-    # Trova e scarica l'ultima versione STABILE di Chromedriver per linux-x64
     && CHROMEDRIVER_URL=$(wget -qO- ${LAST_KNOWN_GOOD_URL} | jq -r '.channels.Stable.downloads.chromedriver[] | select(.platform=="linux-x64") | .url') \
     && wget -O chromedriver-linux64.zip ${CHROMEDRIVER_URL} \
     && unzip chromedriver-linux64.zip \
     && mv chromedriver-linux64/chromedriver /usr/local/bin/ \
     \
-    # Pulizia
     && rm *.zip
-
-# --- FINE SEZIONE NUOVA E DEFINITIVA ---
 
 # Copia tutti i file del progetto
 COPY . .
