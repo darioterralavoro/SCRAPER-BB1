@@ -1,0 +1,31 @@
+# Ambienti virtuali Python
+/venv/
+/.venv/
+/env/
+/ENV/
+
+# Cache e file compilati
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+
+# Cache e dati di runtime dell'applicazione
+/scraping_cache/
+
+# File di output di PyInstaller
+/dist/
+/build/
+*.spec
+
+# File di sistema operativo
+.DS_Store
+Thumbs.db
+
+# File di configurazione di editor/IDE
+.idea/
+.vscode/
+.cursor/
+
+# Log files
+*.log

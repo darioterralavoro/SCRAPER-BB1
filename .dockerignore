@@ -1,0 +1,23 @@
+# Ignora i file di Docker, Git e la documentazione
+Dockerfile
+.dockerignore
+.git
+.gitignore
+*.md
+*.txt
+
+# Ignora la cartella dei test, non serve in produzione
+tests/
+
+# Ignora gli ambienti virtuali e la cache
+venv/
+.venv/
+__pycache__/
+scraping_cache/
+.pytest_cache/
+
+# File di sistema e di configurazione IDE
+.DS_Store
+.idea/
+.vscode/
+.cursor/

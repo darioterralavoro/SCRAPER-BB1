@@ -1,0 +1,797 @@
+<!DOCTYPE html>
+<html lang="it">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web Scraper</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            background-color: #f8f9fa;
+            color: #212529;
+        }
+
+        .container {
+            max-width: 960px;
+            margin: 2rem auto;
+            padding: 2rem;
+            background-color: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            color: #343a40;
+        }
+
+        #startButton {
+            font-size: 1.2rem;
+            padding: 0.8rem 1.5rem;
+            color: #fff;
+            background-color: #007bff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        #startButton:disabled {
+            background-color: #6c757d;
+            cursor: not-allowed;
+        }
+
+        #status {
+            margin-top: 1.5rem;
+            padding: 1rem;
+            border-radius: 5px;
+            background-color: #e9ecef;
+        }
+
+        .results-table {
+            margin-top: 1.5rem;
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .results-table th,
+        .results-table td {
+            padding: 0.75rem;
+            border: 1px solid #dee2e6;
+            text-align: left;
+        }
+
+        .results-table th {
+            background-color: #f2f2f2;
+        }
+
+        .loader {
+            display: none;
+            margin-top: 1rem;
+        }
+
+        .dot-pulse {
+            position: relative;
+            left: -9999px;
+            width: 10px;
+            height: 10px;
+            border-radius: 5px;
+            background-color: #007bff;
+            color: #007bff;
+            box-shadow: 9999px 0 0 -5px;
+            animation: dotPulse 1.5s infinite linear;
+            animation-delay: .25s;
+        }
+
+        .dot-pulse::before,
+        .dot-pulse::after {
+            content: '';
+            display: inline-block;
+            position: absolute;
+            top: 0;
+            width: 10px;
+            height: 10px;
+            border-radius: 5px;
+            background-color: #007bff;
+            color: #007bff;
+        }
+
+        .dot-pulse::before {
+            box-shadow: 9984px 0 0 -5px;
+            animation: dotPulseBefore 1.5s infinite linear;
+            animation-delay: 0s;
+        }
+
+        .dot-pulse::after {
+            box-shadow: 10014px 0 0 -5px;
+            animation: dotPulseAfter 1.5s infinite linear;
+            animation-delay: .5s;
+        }
+
+        @keyframes dotPulseBefore {
+            0% {
+                box-shadow: 9984px 0 0 -5px;
+            }
+
+            30% {
+                box-shadow: 9984px 0 0 2px;
+            }
+
+            60%,
+            100% {
+                box-shadow: 9984px 0 0 -5px;
+            }
+        }
+
+        @keyframes dotPulse {
+            0% {
+                box-shadow: 9999px 0 0 -5px;
+            }
+
+            30% {
+                box-shadow: 9999px 0 0 2px;
+            }
+
+            60%,
+            100% {
+                box-shadow: 9999px 0 0 -5px;
+            }
+        }
+
+        @keyframes dotPulseAfter {
+            0% {
+                box-shadow: 10014px 0 0 -5px;
+            }
+
+            30% {
+                box-shadow: 10014px 0 0 2px;
+            }
+
+            60%,
+            100% {
+                box-shadow: 10014px 0 0 -5px;
+            }
+        }
+
+        .filters-section {
+            margin-bottom: 20px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .selection-info {
+            background: #e3f2fd;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 10px;
+        }
+
+        tr.filtered-out {
+            display: none;
+        }
+
+        .toast-download {
+            position: fixed;
+            right: 30px;
+            bottom: 30px;
+            background: #43a047;
+            color: #fff;
+            padding: 16px 24px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+            font-size: 1.1rem;
+            z-index: 9999;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+
+        .toast-download.show {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        #tab-bar {
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            background: #fff;
+            border-bottom: 2px solid #007bff;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+            padding-left: 2rem;
+            padding-right: 2rem;
+            margin-left: -2rem;
+            margin-right: -2rem;
+            margin-bottom: 30px;
+        }
+
+        .tab-btn {
+            font-size: 1.1rem;
+            font-weight: 500;
+            border: none;
+            border-radius: 5px 5px 0 0;
+            padding: 12px 32px;
+            background: #e9ecef;
+            color: #007bff;
+            cursor: pointer;
+            transition: background 0.2s, color 0.2s;
+            outline: none;
+        }
+
+        .tab-btn.active {
+            background: #007bff;
+            color: #fff;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+        }
+    </style>
+</head>
+
+<body>
+    <div
+        style="background:#ffc107; color:#222; font-weight:bold; text-align:center; padding:10px 0; font-size:1.1em; border-bottom:2px solid #ff9800; letter-spacing:1px;">
+        TEMPLATE VERSION: v3
+    </div>
+    <div class="container">
+        <!-- TAB BAR -->
+        <div id="tab-bar">
+            <button id="tab-scraping" class="tab-btn active">Scraping</button>
+            <button id="tab-link-mapping" class="tab-btn">Gestione Link</button>
+        </div>
+        <!-- SEZIONE SCRAPING/RESULTS -->
+        <div id="scraping-section">
+            <h1>Scraper Web Blubonus</h1>
+            <p>Premi il pulsante per avviare il processo di estrazione dei dati dal sito. L'operazione potrebbe
+                richiedere
+                alcuni minuti.</p>
+            <label for="urlInput" style="font-weight:bold;">URL da analizzare
+                <span
+                    title="Inserisci un link di una pagina di blubonus.it (es: https://blubonus.it/bonusfamiglia/)">ℹ️</span>
+            </label>
+            <input type="text" id="urlInput" placeholder="https://blubonus.it/bonusfamiglia/"
+                style="width:100%;padding:0.5rem;margin-bottom:0.5rem;" autocomplete="off">
+            <div id="urlError" style="color:#dc3545;display:none;margin-bottom:0.5rem;"></div>
+            <button id="startButton">Avvia Scraping</button>
+            <button id="downloadJsonButton" style="display:none; margin-left: 1rem;">Scarica JSON</button>
+            <div class="loader" id="loader">
+                <div class="dot-pulse"></div>
+            </div>
+            <div id="status">Pronto per iniziare.</div>
+            <div id="success-message" style="display:none"></div>
+            <div class="filters-container" id="filters-section"
+                style="display: none; position: sticky; top: 0; z-index: 100; margin: 20px 0; padding: 15px; background: #f5f5f5; border-radius: 5px; border: 2px solid #007bff; box-shadow: 0 2px 8px rgba(0,0,0,0.07);">
+                <div style="margin-bottom: 15px;">
+                    <input type="text" id="search-titolo" placeholder="🔍 Cerca nel titolo..."
+                        style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                </div>
+                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                    <select id="filter-categoria" style="flex: 1; min-width: 150px; padding: 8px;">
+                        <option value="">Tutte le categorie</option>
+                    </select>
+                    <select id="filter-sottocategoria" style="flex: 1; min-width: 150px; padding: 8px;">
+                        <option value="">Tutte le sottocategorie</option>
+                    </select>
+                    <select id="filter-vetrina" style="flex: 1; min-width: 150px; padding: 8px;">
+                        <option value="">Tutte le vetrine</option>
+                    </select>
+                    <button id="reset-filters" style="padding: 8px 16px;">↻ Reset Filtri</button>
+                </div>
+                <div style="margin-top: 10px;">
+                    Visualizzati: <span id="visible-count">0</span> di <span id="total-count">0</span>
+                </div>
+            </div>
+            <div id="results"></div>
+            <div class="selection-info" style="display:none;">
+                <span id="selected-count">0</span> prodotti selezionati su <span id="total-count">0</span>
+            </div>
+            <div id="toast-download" class="toast-download"></div>
+        </div>
+        <!-- SEZIONE LINK MAPPING SEPARATA -->
+        <div id="link-mapping-section"
+            style="display: none; margin-top: 30px; padding: 20px; background: #f8f9fa; border-radius: 8px;">
+            <h3>🔗 Gestione Link (Mapping/Redirect)</h3>
+            <p>Qui puoi vedere tutti i link trovati nei contenuti e inserire una sostituzione (redirect, landing,
+                ecc).<br>Le modifiche non alterano il JSON di export.</p>
+            <div id="mapping-actions" style="margin-bottom:20px; display:flex; gap:10px; align-items:center;">
+                <button id="save-mapping-btn" class="btn btn-success">Salva/ Applica Mappatura</button>
+                <button onclick="exportMappingsFile()" class="btn btn-primary">💾 Esporta Mappature (.json)</button>
+                <button onclick="document.getElementById('import-mappings-input').click()" class="btn btn-secondary">📁
+                    Importa Mappature</button>
+                <input type="file" id="import-mappings-input" accept=".json" style="display: none;"
+                    onchange="importMappingsFile(event)">
+                <span id="mapping-status" style="margin-left:20px;"></span>
+            </div>
+            <div id="mapping-tables" style="display:flex; gap:40px; flex-wrap:wrap;"></div>
+        </div>
+    </div>
+
+    <script>
+        const startButton = document.getElementById('startButton');
+        const statusDiv = document.getElementById('status');
+        const resultsDiv = document.getElementById('results');
+        const loader = document.getElementById('loader');
+        const downloadJsonButton = document.getElementById('downloadJsonButton');
+        const urlInput = document.getElementById('urlInput');
+        let pollInterval;
+        let linkMappings = {};
+
+        startButton.addEventListener('click', () => {
+            const url = urlInput.value.trim();
+            // Validazione URL lato client
+            if (!validateBlubonusUrl(url)) {
+                urlError.textContent = 'URL non valido: inserisci un link di blubonus.it';
+                urlError.style.display = 'block';
+                return;
+            }
+            urlError.style.display = 'none';
+            localStorage.setItem('lastBlubonusUrl', url);
+            startButton.disabled = true;
+            statusDiv.textContent = 'Avvio dello scraping in corso...';
+            statusDiv.style.backgroundColor = '#d1ecf1';
+            loader.style.display = 'block';
+            resultsDiv.innerHTML = '';
+            downloadJsonButton.style.display = 'none';
+
+            fetch('/start-scraping', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ url })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        statusDiv.textContent = 'Scraping avviato in background. Attendi i risultati...';
+                        pollInterval = setInterval(getResults, 3000);
+                    } else {
+                        statusDiv.textContent = `Errore: ${data.message}`;
+                        statusDiv.style.backgroundColor = '#f8d7da';
+                        startButton.disabled = false;
+                        loader.style.display = 'none';
+                    }
+                })
+                .catch(error => {
+                    console.error('Errore:', error);
+                    statusDiv.textContent = 'Errore durante l\'avvio dello scraping.';
+                    statusDiv.style.backgroundColor = '#f8d7da';
+                    startButton.disabled = false;
+                    loader.style.display = 'none';
+                });
+        });
+
+        // Validazione formato URL e dominio blubonus.it
+        function validateBlubonusUrl(url) {
+            try {
+                const u = new URL(url);
+                return u.hostname.endsWith('blubonus.it');
+            } catch (e) {
+                return false;
+            }
+        }
+
+        // Ripristina ultimo URL valido da localStorage
+        window.addEventListener('DOMContentLoaded', () => {
+            const last = localStorage.getItem('lastBlubonusUrl');
+            if (last) urlInput.value = last;
+        });
+
+        function getResults() {
+            fetch('/results')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'completed') {
+                        clearInterval(pollInterval);
+                        statusDiv.textContent = `Estrazione completata! Trovati ${data.data.product_count} prodotti e ${data.data.box_count} box.`;
+                        statusDiv.style.backgroundColor = '#d4edda';
+                        startButton.disabled = false;
+                        loader.style.display = 'none';
+                        displayResults(data.data.products);
+                        downloadJsonButton.style.display = 'inline-block';
+                    } else if (data.status === 'running') {
+                        statusDiv.textContent = 'Scraping ancora in corso... attendi.';
+                    } else {
+                        // no_data or other status
+                        clearInterval(pollInterval);
+                        statusDiv.textContent = data.message;
+                        statusDiv.style.backgroundColor = '#f8d7da';
+                        startButton.disabled = false;
+                        loader.style.display = 'none';
+                    }
+                })
+                .catch(error => {
+                    console.error('Errore nel polling:', error);
+                    clearInterval(pollInterval);
+                    statusDiv.textContent = 'Errore durante il recupero dei risultati.';
+                    statusDiv.style.backgroundColor = '#f8d7da';
+                    startButton.disabled = false;
+                    loader.style.display = 'none';
+                });
+        }
+
+        function populateFilters(data) {
+            const categorie = [...new Set(data.map(item => item.CategoryName))].sort();
+            const sottocategorie = [...new Set(data.map(item => item.PageTitle))].sort();
+            const vetrine = [...new Set(data.map(item => item.Vetrina))].sort();
+            const catSel = document.getElementById('filter-categoria');
+            const subSel = document.getElementById('filter-sottocategoria');
+            const vetSel = document.getElementById('filter-vetrina');
+            catSel.innerHTML = '<option value="">Tutte le categorie</option>' + categorie.map(c => `<option value="${c}">${c}</option>`).join('');
+            subSel.innerHTML = '<option value="">Tutte le sottocategorie</option>' + sottocategorie.map(s => `<option value="${s}">${s}</option>`).join('');
+            vetSel.innerHTML = '<option value="">Tutte le vetrine</option>' + vetrine.map(v => `<option value="${v}">${v}</option>`).join('');
+        }
+
+        /**
+         * Crea e restituisce una nuova versione "debounced" della funzione passata,
+         * che ne ritarda l'invocazione fino a quando non sono trascorsi 'delay' millisecondi
+         * dall'ultima volta che è stata invocata.
+         */
+        function debounce(func, delay = 300) {
+            let timeoutId;
+            return function (...args) {
+                clearTimeout(timeoutId);
+                timeoutId = setTimeout(() => {
+                    func.apply(this, args);
+                }, delay);
+            };
+        }
+
+        function displayResults(products) {
+            if (!products || products.length === 0) {
+                resultsDiv.innerHTML = '<p>Nessun prodotto trovato.</p>';
+                document.getElementById('filters-section').style.display = 'none';
+                document.getElementById('visible-count').textContent = 0;
+                document.getElementById('total-count').textContent = 0;
+                return;
+            }
+            document.getElementById('filters-section').style.display = 'block';
+            let selected = window.selectedSet || new Set();
+            let table = '<table id="results-table" class="results-table"><thead><tr>' +
+                '<th><input type="checkbox" id="select-all"></th>' +
+                '<th>Titolo</th><th>Categoria</th><th>Sottocategoria</th><th>Vetrina</th></tr></thead><tbody id="results-body">';
+            products.forEach((product, i) => {
+                table += `
+                    <tr data-index="${i}" data-link="${product.DetailURL}">
+                        <td><input type="checkbox" class="row-checkbox" data-index="${i}" ${selected.has(i) ? 'checked' : ''}></td>
+                        <td><a href="${product.DetailURL}" target="_blank">${product.Title}</a></td>
+                        <td>${product.CategoryName}</td>
+                        <td>${product.PageTitle || 'N/D'}</td>
+                        <td>${product.Vetrina || '-'}</td>
+                    </tr>
+                `;
+            });
+            table += '</tbody></table>';
+            resultsDiv.innerHTML = table;
+            window.currentResults = products;
+            window.selectedSet = selected;
+            document.getElementById('total-count').textContent = products.length;
+            populateFilters(products);
+            applyFilters();
+            const selectAll = document.getElementById('select-all');
+            selectAll.addEventListener('change', function () {
+                const visibleRows = Array.from(document.querySelectorAll('#results-table tbody tr')).filter(r => r.style.display !== 'none');
+                visibleRows.forEach(row => {
+                    const cb = row.querySelector('.row-checkbox');
+                    cb.checked = selectAll.checked;
+                    if (selectAll.checked) window.selectedSet.add(+cb.dataset.index);
+                    else window.selectedSet.delete(+cb.dataset.index);
+                });
+                updateSelectedCount();
+            });
+            function updateSelectedCount() {
+                const selected = window.selectedSet || new Set();
+                const total = (window.currentResults || []).length;
+                document.getElementById('selected-count').textContent = selected.size;
+                document.getElementById('total-count').textContent = total;
+                downloadJsonButton.textContent = `Scarica JSON (${selected.size} selezionati)`;
+            }
+            function updateSelectAllState() {
+                const visibleRows = Array.from(document.querySelectorAll('#results-table tbody tr')).filter(r => r.style.display !== 'none');
+                const allVisible = visibleRows.every(r => selected.has(+r.dataset.index));
+                selectAll.checked = allVisible && visibleRows.length > 0;
+            }
+            updateSelectedCount();
+            updateSelectAllState();
+            // Event delegation su tbody
+            const resultsBody = document.getElementById('results-body');
+            resultsBody.addEventListener('click', function (event) {
+                if (event.target.matches('input.row-checkbox')) {
+                    const idx = +event.target.dataset.index;
+                    if (event.target.checked) window.selectedSet.add(idx);
+                    else window.selectedSet.delete(idx);
+                    updateSelectedCount();
+                    updateSelectAllState();
+                }
+            });
+            resultsBody.addEventListener('dblclick', function (event) {
+                const row = event.target.closest('tr');
+                if (row && row.dataset.link) {
+                    window.open(row.dataset.link, '_blank');
+                }
+            });
+            downloadJsonButton.onclick = function () {
+                const selected = window.selectedSet || new Set();
+                const selectedIndices = Array.from(selected);
+                if (selectedIndices.length === 0) {
+                    if (!confirm('Nessun prodotto selezionato. Vuoi scaricare tutti i risultati?')) return;
+                }
+                fetch('/download-json', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ selected_indices: selectedIndices })
+                })
+                    .then(resp => resp.blob())
+                    .then(blob => {
+                        const url = window.URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        const now = new Date().toISOString().slice(0, 10);
+                        a.download = `blubonus_filtered_${now}.json`;
+                        document.body.appendChild(a);
+                        a.click();
+                        a.remove();
+                        window.URL.revokeObjectURL(url);
+                        showDownloadToast(selectedIndices.length || products.length);
+                    });
+            };
+        }
+
+        // Funzione per applicare tutti i filtri e ricerca
+        function applyFilters() {
+            const searchText = document.getElementById('search-titolo').value.toLowerCase();
+            const filterCategoria = document.getElementById('filter-categoria').value;
+            const filterSottocategoria = document.getElementById('filter-sottocategoria').value;
+            const filterVetrina = document.getElementById('filter-vetrina').value;
+            let visibleCount = 0;
+            const rows = document.querySelectorAll('#results-table tbody tr');
+            const data = window.currentResults || [];
+            rows.forEach((row, index) => {
+                const item = data[index];
+                const matchTitolo = !searchText || (item.Title || '').toLowerCase().includes(searchText);
+                const matchCategoria = !filterCategoria || item.CategoryName === filterCategoria;
+                const matchSottocategoria = !filterSottocategoria || item.PageTitle === filterSottocategoria;
+                const matchVetrina = !filterVetrina || item.Vetrina === filterVetrina;
+                if (matchTitolo && matchCategoria && matchSottocategoria && matchVetrina) {
+                    row.style.display = '';
+                    visibleCount++;
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+            document.getElementById('visible-count').textContent = visibleCount;
+            // Aggiorna counter selezionati e select all
+            if (typeof updateSelectedCount === 'function') updateSelectedCount();
+            if (typeof updateSelectAllState === 'function') updateSelectAllState();
+        }
+
+        // Event listeners filtri e ricerca
+        ['search-titolo', 'filter-categoria', 'filter-sottocategoria', 'filter-vetrina'].forEach(id => {
+            document.getElementById(id).addEventListener('input', debounce(applyFilters, 300));
+            document.getElementById(id).addEventListener('change', applyFilters);
+        });
+        document.getElementById('reset-filters').addEventListener('click', () => {
+            document.getElementById('search-titolo').value = '';
+            document.getElementById('filter-categoria').value = '';
+            document.getElementById('filter-sottocategoria').value = '';
+            document.getElementById('filter-vetrina').value = '';
+            applyFilters();
+        });
+
+        // Funzione per mostrare la sezione mapping dopo lo scraping
+        function showLinkMappingSection() {
+            fetch('/get-unique-links')
+                .then(resp => resp.json())
+                .then(data => {
+                    const tablesDiv = document.getElementById('mapping-tables');
+                    tablesDiv.innerHTML = `
+                        <div style="flex:1; min-width:420px;">
+                            <h4 style='margin-bottom:8px;'>Link già mappati</h4>
+                            <table id="link-mapped-table" style="width:100%; min-width:420px; border-collapse: collapse;">
+                                <thead>
+                                    <tr style="background:#e2ffe2;">
+                                        <th style="padding:8px; border:1px solid #dee2e6;">Link trovato</th>
+                                        <th style="padding:8px; border:1px solid #dee2e6;">Sostituzione</th>
+                                        <th style="padding:8px; border:1px solid #dee2e6; min-width:120px;">Azioni</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                        <div style="flex:1; min-width:320px;">
+                            <h4 style='margin-bottom:8px;'>Link da mappare</h4>
+                            <table id="link-unmapped-table" style="width:100%; border-collapse: collapse;">
+                                <thead>
+                                    <tr style="background:#fffbe2;">
+                                        <th style="padding:8px; border:1px solid #dee2e6;">Link trovato</th>
+                                        <th style="padding:8px; border:1px solid #dee2e6;">Sostituzione</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                    `;
+                    // Popola mapped
+                    const mappedBody = tablesDiv.querySelector('#link-mapped-table tbody');
+                    (data.mapped || []).forEach(obj => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td style="padding:8px; border:1px solid #dee2e6; word-break:break-all; background:#f6fff6;">${obj.link}</td>
+                            <td style="padding:8px; border:1px solid #dee2e6; background:#f6fff6;">
+                                <input type="text" class="mapping-input" data-link="${encodeURIComponent(obj.link)}" value="${obj.replacement}" style="width:100%; background:#e9ecef; color:#555; border:1.5px solid #b2dfdb; border-radius:4px; font-weight:bold;" readonly tabindex="-1">
+                            </td>
+                            <td style=\"padding:8px; border:1px solid #dee2e6; text-align:center; min-width:50px; display:flex; gap:4px; justify-content:center; background:#f6fff6;\">
+                                <button class='remove-mapping-btn' data-link='${encodeURIComponent(obj.link)}' title='Rimuovi questa mappatura' style='color:#fff; background:#dc3545; border:none; border-radius:4px; padding:2px 7px; cursor:pointer; font-size:1em; display:inline-flex; align-items:center; transition:background 0.2s;'><span style='font-size:1.1em;'>🗑️</span></button>
+                            </td>
+                        `;
+                        mappedBody.appendChild(row);
+                    });
+                    // Popola unmapped
+                    const unmappedBody = tablesDiv.querySelector('#link-unmapped-table tbody');
+                    (data.unmapped || []).forEach(link => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td style="padding:8px; border:1px solid #dee2e6; word-break:break-all; background:#fffde7;">${link}</td>
+                            <td style="padding:8px; border:1px solid #dee2e6; display:flex; gap:4px; align-items:center; background:#fffde7;">
+                                <input type="text" class="mapping-input" data-link="${encodeURIComponent(link)}" style="width:100%; border:1.5px solid #ffe082; border-radius:4px; font-weight:bold;">
+                                <button class='confirm-mapping-btn' data-link='${encodeURIComponent(link)}' title='Conferma questa mappatura' style='color:#fff; background:#198754; border:none; border-radius:4px; padding:2px 7px; cursor:pointer; font-size:1em; display:inline-flex; align-items:center; transition:background 0.2s;'><span style='font-size:1.1em;'>✔️</span></button>
+                            </td>
+                        `;
+                        unmappedBody.appendChild(row);
+                    });
+                    document.getElementById('link-mapping-section').style.display = 'block';
+                    // Handler salvataggio mapping globale
+                    const saveMappingBtn = document.getElementById('save-mapping-btn');
+                    if (saveMappingBtn) {
+                        saveMappingBtn.onclick = async function () {
+                            const inputs = document.querySelectorAll('.mapping-input');
+                            const mappings = {};
+                            inputs.forEach(input => {
+                                const original = decodeURIComponent(input.getAttribute('data-link'));
+                                const replacement = input.value.trim();
+                                if (replacement) mappings[original] = replacement;
+                            });
+                            await fetch('/apply-mappings', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ mappings })
+                            })
+                                .then(resp => resp.json())
+                                .then(async data => {
+                                    document.getElementById('mapping-status').textContent = data.message || 'Mappatura applicata.';
+                                    await loadCurrentMappings();
+                                    showLinkMappingSection();
+                                })
+                                .catch(() => {
+                                    document.getElementById('mapping-status').textContent = 'Errore durante il salvataggio.';
+                                });
+                        };
+                    }
+                    // Handler rimozione mapping singolo
+                    const removeBtns = tablesDiv.querySelectorAll('.remove-mapping-btn');
+                    removeBtns.forEach(btn => {
+                        btn.onclick = async function () {
+                            const link = decodeURIComponent(btn.getAttribute('data-link'));
+                            await fetch('/apply-mappings', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ mappings: Object.fromEntries(Object.entries(linkMappings).filter(([k]) => k !== link)) })
+                            })
+                                .then(resp => resp.json())
+                                .then(async data => {
+                                    document.getElementById('mapping-status').textContent = 'Mappatura rimossa.';
+                                    await loadCurrentMappings();
+                                    showLinkMappingSection();
+                                })
+                                .catch(() => {
+                                    document.getElementById('mapping-status').textContent = 'Errore durante la rimozione.';
+                                });
+                        };
+                    });
+                    // Handler conferma mapping singolo SOLO su unmapped
+                    const confirmBtns = tablesDiv.querySelectorAll('.confirm-mapping-btn');
+                    confirmBtns.forEach(btn => {
+                        btn.onclick = async function () {
+                            const link = decodeURIComponent(btn.getAttribute('data-link'));
+                            const input = tablesDiv.querySelector(`.mapping-input[data-link='${encodeURIComponent(link)}']`);
+                            const replacement = input.value.trim();
+                            if (!replacement) {
+                                alert('Inserisci una sostituzione per confermare.');
+                                return;
+                            }
+                            await fetch('/apply-mappings', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ mappings: { ...linkMappings, [link]: replacement } })
+                            })
+                                .then(resp => resp.json())
+                                .then(async data => {
+                                    document.getElementById('mapping-status').textContent = 'Mappatura aggiornata.';
+                                    await loadCurrentMappings();
+                                    showLinkMappingSection();
+                                })
+                                .catch(() => {
+                                    document.getElementById('mapping-status').textContent = 'Errore durante la conferma.';
+                                });
+                        };
+                    });
+                });
+        }
+
+        // --- TAB LOGIC ---
+        const tabScraping = document.getElementById('tab-scraping');
+        const tabLinkMapping = document.getElementById('tab-link-mapping');
+        const scrapingSection = document.getElementById('scraping-section');
+        const linkMappingSection = document.getElementById('link-mapping-section');
+        function showTab(tab) {
+            if (tab === 'scraping') {
+                scrapingSection.style.display = '';
+                linkMappingSection.style.display = 'none';
+                tabScraping.classList.add('active');
+                tabLinkMapping.classList.remove('active');
+            } else {
+                scrapingSection.style.display = 'none';
+                linkMappingSection.style.display = '';
+                tabScraping.classList.remove('active');
+                tabLinkMapping.classList.add('active');
+                showLinkMappingSection();
+            }
+        }
+        tabScraping.onclick = () => showTab('scraping');
+        tabLinkMapping.onclick = () => showTab('link');
+        // Default: mostra scraping
+        showTab('scraping');
+
+        // Esporta mappature come file JSON
+        function exportMappingsFile() {
+            if (!linkMappings || Object.keys(linkMappings).length === 0) {
+                alert('Nessuna mappatura da esportare');
+                return;
+            }
+            window.location.href = '/export-mappings-file';
+        }
+
+        // Importa mappature da file JSON
+        async function importMappingsFile(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            try {
+                const fileContent = await file.text();
+                const importedData = JSON.parse(fileContent);
+                const response = await fetch('/import-mappings', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(importedData)
+                });
+                if (response.ok) {
+                    const result = await response.json();
+                    alert(`Import completato!\nMappature applicate: ${result.applied}\nMappature ignorate (link non presenti): ${result.skipped}`);
+                    await loadCurrentMappings();
+                    showLinkMappingSection();
+                } else {
+                    const error = await response.json();
+                    alert('Errore import: ' + error.error);
+                }
+            } catch (err) {
+                alert('Errore nel file JSON: ' + err.message);
+            }
+            event.target.value = '';
+        }
+
+        // Funzione helper per ricaricare mappature correnti dal backend
+        async function loadCurrentMappings() {
+            try {
+                const response = await fetch('/get-current-mappings');
+                if (response.ok) {
+                    linkMappings = await response.json();
+                }
+            } catch (err) {
+                console.error('Errore caricamento mappature:', err);
+            }
+        }
+
+        // Carica le mappature correnti all'avvio
+        window.addEventListener('DOMContentLoaded', loadCurrentMappings);
+    </script>
+
+</body>
+
+</html>

@@ -1,0 +1,7 @@
+services:
+  - name: blubonus-scraper-app
+    type: web
+    env: docker
+    region: frankfurt
+    plan: free
+    healthCheckPath: /
