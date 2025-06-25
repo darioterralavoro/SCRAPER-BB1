@@ -297,22 +297,28 @@ def run_scraping(start_url):
     # --- FINE LOGICA DI CACHING ---
     chrome_options = Options()
 
-    # Questo puntatore è FONDAMENTALE perché abbiamo installato Chrome in un percorso personalizzato
-    chrome_options.binary_location = "/opt/chrome-linux64/chrome"
-
     # Opzioni standard per l'esecuzione su server
     chrome_options.add_argument("--headless")
     chrome_options.add_argument("--no-sandbox")
     chrome_options.add_argument("--disable-dev-shm-usage")
-
-    # Opzioni per mascherare l'automazione
-    user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36"
-    chrome_options.add_argument(f'user-agent={user_agent}')
     chrome_options.add_argument("--disable-blink-features=AutomationControlled")
 
-    # Inizializza il driver. Non serve specificare il service path
-    # perché chromedriver è ora nel PATH di sistema (/usr/local/bin).
-    driver = webdriver.Chrome(options=chrome_options)
+    user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36"
+    chrome_options.add_argument(f'user-agent={user_agent}')
+
+    # --- INIZIO BLOCCO PER HEROKU ---
+    # Rileva automaticamente l'ambiente Heroku e usa i percorsi forniti dalle variabili d'ambiente
+    if "GOOGLE_CHROME_BIN" in os.environ:
+        logger.info("Rilevato ambiente Heroku, si usano i percorsi specifici.")
+        chrome_options.binary_location = os.environ.get("GOOGLE_CHROME_BIN")
+        service = Service(executable_path=os.environ.get("CHROMEDRIVER_PATH"))
+        driver = webdriver.Chrome(service=service, options=chrome_options)
+    else:
+        logger.info("Nessun ambiente Heroku rilevato, si usa la configurazione locale.")
+        # Se chromedriver è nel PATH di sistema, non serve specificare il service
+        driver = webdriver.Chrome(options=chrome_options)
+    # --- FINE BLOCCO PER HEROKU ---
+
     try:
         driver.set_page_load_timeout(300)  # Timeout massimo 5 minuti
         LINK_MAP_FILE = "link_map.json"
