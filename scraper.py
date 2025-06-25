@@ -296,6 +296,11 @@ def run_scraping(start_url):
             logger.warning(f"Impossibile leggere il file di cache {cache_filepath}: {e}. Si procederà con lo scraping.")
     # --- FINE LOGICA DI CACHING ---
     chrome_options = Options()
+    # Impostiamo un User-Agent standard per sembrare un utente normale
+    user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36"
+    chrome_options.add_argument(f'user-agent={user_agent}')
+    # Aggiungiamo altre opzioni che aiutano a mascherare l'automazione
+    chrome_options.add_argument("--disable-blink-features=AutomationControlled")
     chrome_options.add_argument("--headless")
     chrome_options.add_argument("--no-sandbox")
     chrome_options.add_argument("--disable-dev-shm-usage")
