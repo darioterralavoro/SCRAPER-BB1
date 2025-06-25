@@ -12,15 +12,15 @@ RUN apt-get update && apt-get install -y wget unzip gnupg \
     && apt-get install -y google-chrome-stable \
     && rm -rf /var/lib/apt/lists/*
 
-# Scarica e installa il chromedriver FORZANDO la versione per ARM64
+# Scarica e installa il chromedriver FORZANDO la versione per AMD64 (x64)
 RUN apt-get update && apt-get install -y jq \
-    && echo "Forcing ARM64 architecture for chromedriver download..." \
+    && echo "Forcing AMD64 (x64) architecture for chromedriver download..." \
     && CHROME_VERSION=$(google-chrome --version | cut -d " " -f 3 | cut -d "." -f 1-3) \
-    && CD_URL=$(wget -qO- https://googlechromelabs.github.io/chrome-for-testing/known-good-versions-with-downloads.json | jq -r ".versions[] | select(.version | startswith(\"${CHROME_VERSION}\")) | .downloads.chromedriver[] | select(.platform==\"linux-arm64\") | .url") \
+    && CD_URL=$(wget -qO- https://googlechromelabs.github.io/chrome-for-testing/known-good-versions-with-downloads.json | jq -r ".versions[] | select(.version | startswith(\"${CHROME_VERSION}\")) | .downloads.chromedriver[] | select(.platform==\"linux-x64\") | .url") \
     && wget -O chromedriver.zip ${CD_URL} \
     && unzip chromedriver.zip \
     && mv chromedriver-linux64/chromedriver /usr/local/bin/ \
-    && rm -rf chromedriver.zip chromedriver-linux* \
+    && rm -rf chromedriver.zip chromedriver-linux64 \
     && rm -rf /var/lib/apt/lists/*
 
 # Copia TUTTI i file del progetto (dalla Root Directory) nella directory di lavoro (/app)
