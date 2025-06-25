@@ -176,6 +176,18 @@ def extract_products_from_page(driver, page_url, session, category_name, page_ti
         logger.info(f"[SCRAPER] Apro pagina categoria: {page_url}")
         try:
             driver.get(page_url)
+            # --- INIZIO BLOCCO DI LOGGING PER DEBUG REMOTO ---
+            try:
+                page_title = driver.title
+                logger.info(f"DEBUGGING REMOTO - Titolo della pagina: '{page_title}'")
+                page_source_snippet = driver.page_source[:2500]
+                logger.info(f"DEBUGGING REMOTO - Anteprima HTML:\n{page_source_snippet}")
+                source_lower = driver.page_source.lower()
+                if "captcha" in source_lower or "verify you are human" in source_lower or "accesso negato" in source_lower:
+                    logger.warning("DEBUGGING REMOTO: Rilevate parole chiave sospette (CAPTCHA/blocco) nel sorgente!")
+            except Exception as e:
+                logger.error(f"DEBUGGING REMOTO: Errore durante il logging di debug: {e}")
+            # --- FINE BLOCCO DI LOGGING PER DEBUG REMOTO ---
         except TimeoutException:
             logger.critical(f"TIMEOUT: La pagina {page_url} ha impiegato troppo tempo a caricare e lo scraping è stato interrotto.")
             return products_data
@@ -313,6 +325,18 @@ def run_scraping(start_url):
         logger.info(f"[SCRAPER] Inizio scraping URL: {start_url}")
         try:
             driver.get(start_url)
+            # --- INIZIO BLOCCO DI LOGGING PER DEBUG REMOTO ---
+            try:
+                page_title = driver.title
+                logger.info(f"DEBUGGING REMOTO - Titolo della pagina: '{page_title}'")
+                page_source_snippet = driver.page_source[:2500]
+                logger.info(f"DEBUGGING REMOTO - Anteprima HTML:\n{page_source_snippet}")
+                source_lower = driver.page_source.lower()
+                if "captcha" in source_lower or "verify you are human" in source_lower or "accesso negato" in source_lower:
+                    logger.warning("DEBUGGING REMOTO: Rilevate parole chiave sospette (CAPTCHA/blocco) nel sorgente!")
+            except Exception as e:
+                logger.error(f"DEBUGGING REMOTO: Errore durante il logging di debug: {e}")
+            # --- FINE BLOCCO DI LOGGING PER DEBUG REMOTO ---
         except TimeoutException:
             logger.critical(f"TIMEOUT: La pagina {start_url} ha impiegato troppo tempo a caricare e lo scraping è stato interrotto.")
             return [], []
