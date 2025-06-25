@@ -14,20 +14,17 @@ RUN apt-get update && apt-get install -y wget unzip gnupg \
 
 # Scarica e installa il chromedriver corrispondente
 RUN CHROME_VERSION=$(google-chrome --version | cut -d " " -f 3 | cut -d "." -f 1-3) \
-    && CD_URL=$(wget -qO- https://googlechromelabs.github.io/chrome-for-testing/known-good-versions-with-downloads.json | grep -o "https://storage.googleapis.com/chrome-for-testing-public/[^"]*chromedriver-linux64.zip" | grep "${CHROME_VERSION}" | head -n 1) \
+    && CD_URL=$(wget -qO- https://googlechromelabs.github.io/chrome-for-testing/known-good-versions-with-downloads.json | grep -o "https://storage.googleapis.com/chrome-for-testing-public/[^\"]*chromedriver-linux64.zip" | grep "${CHROME_VERSION}" | head -n 1) \
     && wget -O chromedriver.zip ${CD_URL} \
     && unzip chromedriver.zip \
     && mv chromedriver-linux64/chromedriver /usr/local/bin/ \
     && rm chromedriver.zip chromedriver-linux64 -r
 
-# Copia prima il file dei requisiti per sfruttare il caching di Docker
-COPY requirements.txt .
-
-# Installa le dipendenze Python
-RUN pip install --no-cache-dir -r requirements.txt
-
-# Copia tutto il resto del codice dell'applicazione nel container
+# Copia TUTTI i file del progetto (dalla Root Directory) nella directory di lavoro (/app)
 COPY . .
+
+# Ora che tutti i file sono dentro, installa le dipendenze Python
+RUN pip install --no-cache-dir -r requirements.txt
 
 # Esponi la porta su cui Gunicorn girerà
 EXPOSE 10000
