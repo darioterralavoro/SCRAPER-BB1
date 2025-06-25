@@ -14,15 +14,15 @@ RUN apt-get update && apt-get install -y wget unzip jq libnss3 libgdk-pixbuf2.0-
 RUN echo "PASSO 1: Download del file JSON..." \
     && wget -O versions.json "https://googlechromelabs.github.io/chrome-for-testing/last-known-good-versions-with-downloads.json"
 
-# PASSO 2: Estrai l'URL di Chrome e stampalo prima di usarlo.
-RUN echo "PASSO 2: Estrazione URL di Chrome..." \
-    && CHROME_URL=$(cat versions.json | jq -r '.channels.Stable.downloads.chrome[] | select(.platform=="linux-x64") | .url') \
+# PASSO 2: Estrai l'URL di Chrome usando Python.
+RUN echo "PASSO 2: Estrazione URL di Chrome con Python..." \
+    && CHROME_URL=$(python -c "import json; f=open('versions.json'); data=json.load(f); print([d['url'] for d in data['channels']['Stable']['downloads']['chrome'] if d['platform']=='linux-x64'][0])") \
     && echo "URL di Chrome trovato: ${CHROME_URL}" \
     && wget -O chrome-linux64.zip "${CHROME_URL}"
 
-# PASSO 3: Estrai l'URL di Chromedriver e stampalo prima di usarlo.
-RUN echo "PASSO 3: Estrazione URL di Chromedriver..." \
-    && CHROMEDRIVER_URL=$(cat versions.json | jq -r '.channels.Stable.downloads.chromedriver[] | select(.platform=="linux-x64") | .url') \
+# PASSO 3: Estrai l'URL di Chromedriver usando Python.
+RUN echo "PASSO 3: Estrazione URL di Chromedriver con Python..." \
+    && CHROMEDRIVER_URL=$(python -c "import json; f=open('versions.json'); data=json.load(f); print([d['url'] for d in data['channels']['Stable']['downloads']['chromedriver'] if d['platform']=='linux-x64'][0])") \
     && echo "URL di Chromedriver trovato: ${CHROMEDRIVER_URL}" \
     && wget -O chromedriver-linux64.zip "${CHROMEDRIVER_URL}"
 
