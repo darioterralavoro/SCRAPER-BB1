@@ -7,7 +7,6 @@ from urllib.parse import urljoin
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -308,19 +307,14 @@ def run_scraping(start_url):
     chrome_options.add_argument(f'user-agent={user_agent}')
     chrome_options.add_argument("--disable-blink-features=AutomationControlled")
 
-    # --- INIZIO BLOCCO DI RILEVAMENTO AMBIENTE ---
-    # Controlliamo se esistono le variabili d'ambiente di Railway
-    if "RAILWAY_STATIC_URL" in os.environ:
-        logger.info("Rilevato ambiente Railway. Configurazione dei percorsi specifici.")
-        # Railway imposta queste variabili d'ambiente quando rileva le dipendenze
-        chrome_options.binary_location = os.environ.get("CHROME_PATH")
-        service = Service(executable_path=os.environ.get("CHROMEDRIVER_PATH"))
-        driver = webdriver.Chrome(service=service, options=chrome_options)
-    else:
-        logger.info("Nessun ambiente cloud rilevato, si usa la configurazione locale.")
-        # Questa è la configurazione di default per quando esegui il programma sul tuo computer
-        driver = webdriver.Chrome(options=chrome_options)
-    # --- FINE BLOCCO DI RILEVAMENTO AMBIENTE ---
+    # --- Inizializzazione Semplice e Definitiva ---
+    # Rimuoviamo ogni tentativo di specificare i percorsi.
+    # Ci affidiamo al 100% all'ambiente configurato da Nixpacks.
+    logger.info("Tentativo di avvio di Chrome con configurazione di default...")
+
+    # Non serve più Service() perché chromedriver dovrebbe essere nel PATH
+    driver = webdriver.Chrome(options=chrome_options)
+    # --- Fine ---
 
     try:
         driver.set_page_load_timeout(300)  # Timeout massimo 5 minuti
