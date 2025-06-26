@@ -297,21 +297,30 @@ def run_scraping(start_url):
     # --- FINE LOGICA DI CACHING ---
     chrome_options = Options()
 
-    # Opzioni standard per l'esecuzione su server
+    # Opzioni standard
     chrome_options.add_argument("--headless")
     chrome_options.add_argument("--no-sandbox")
     chrome_options.add_argument("--disable-dev-shm-usage")
-    chrome_options.add_argument("--window-size=1920,1080") # A volte aiuta
+    chrome_options.add_argument("--window-size=1920,1080")
 
-    # Opzioni per mascherare l'automazione
+    # Opzioni anti-bot
     user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"
     chrome_options.add_argument(f'user-agent={user_agent}')
     chrome_options.add_argument("--disable-blink-features=AutomationControlled")
 
-    # Inizializzazione semplice e pulita.
-    # Ci affidiamo completamente a Railway/Nixpacks per trovare e configurare
-    # sia Chrome che Chromedriver nel path di sistema.
-    driver = webdriver.Chrome(options=chrome_options)
+    # --- INIZIO BLOCCO DI RILEVAMENTO AMBIENTE ---
+    # Controlliamo se esistono le variabili d'ambiente di Railway
+    if "RAILWAY_STATIC_URL" in os.environ:
+        logger.info("Rilevato ambiente Railway. Configurazione dei percorsi specifici.")
+        # Railway imposta queste variabili d'ambiente quando rileva le dipendenze
+        chrome_options.binary_location = os.environ.get("CHROME_PATH")
+        service = Service(executable_path=os.environ.get("CHROMEDRIVER_PATH"))
+        driver = webdriver.Chrome(service=service, options=chrome_options)
+    else:
+        logger.info("Nessun ambiente cloud rilevato, si usa la configurazione locale.")
+        # Questa è la configurazione di default per quando esegui il programma sul tuo computer
+        driver = webdriver.Chrome(options=chrome_options)
+    # --- FINE BLOCCO DI RILEVAMENTO AMBIENTE ---
 
     try:
         driver.set_page_load_timeout(300)  # Timeout massimo 5 minuti
